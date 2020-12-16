@@ -38,7 +38,6 @@ Config = NamedTuple(
     [
         ("mark_name", str),
         ("meta_name", Union[str, None]),
-        ("account_liabilities", str),
         ("account_debtors", str),
         ("account_creditors", str),
         ("quantize", Decimal),
@@ -250,7 +249,7 @@ def allocate(
                 errors.append(
                     PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
-                        "The posting can't share more than it's absolute value",
+                        "The posting can't allocate more than it's absolute value",
                         entry,
                     )
                 )
@@ -261,7 +260,7 @@ def allocate(
                 errors.append(
                     PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
-                        "The posting can't share more percent than 100%.",
+                        "The posting can't allocate more percent than 100%.",
                         entry,
                     )
                 )

@@ -1,4 +1,4 @@
-Feature: Share a single posting to single account
+Feature: allocate a single posting to single account
 
   Background: default
     Given the following setup:
@@ -7,132 +7,140 @@ Feature: Share a single posting to single account
       2020-01-01 open Expenses:Food:Snacks
       2020-01-01 open Income:RandomVeryVeryLong
 
-  Scenario: Partially share sole Expense posting using absolute amount
+  Scenario: Partially allocate sole Expense posting using absolute amount
     When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash           -10.00 EUR
         Expenses:Food:Drinks
-          share: "Assets:Debtors:Bob-4"
+          allocate: "Equity:Bob-4"
 
     Then should not error
     Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks    6.00 EUR
-          shared: "Assets:Debtors:Bob 4.00 EUR"
-        Assets:Debtors:Bob      4.00 EUR
-          shared: "Expenses:Food:Drinks 4.00 EUR"
-
-  Scenario: Partially share sole Expense posting with short account name
-    When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks
-          share: "Bob-4"
-
-    Then should not error
-    Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks    6.00 EUR
-          shared: "Assets:Debtors:Bob 4.00 EUR"
-        Assets:Debtors:Bob      4.00 EUR
-          shared: "Expenses:Food:Drinks 4.00 EUR"
-
-  Scenario: Partially share sole Expense posting using relative amount
-    When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks
-          share: "Bob-40%"
-
-    Then should not error
-    Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks    6.00 EUR
-          shared: "Assets:Debtors:Bob 40% (4.00 EUR)"
-        Assets:Debtors:Bob      4.00 EUR
-          shared: "Expenses:Food:Drinks 40% (4.00 EUR)"
-
-  Scenario: Partially share sole Expense posting using ommitted amount
-    When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
-        Assets:Cash           -10.00 EUR
-        Expenses:Food:Drinks
-          share: "Bob"
-
-    Then should not error
-    Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -10.00 EUR
-        Expenses:Food:Drinks        5.00 EUR
-          shared: "Assets:Debtors:Bob (50%, 5.00 EUR)"
-        Assets:Debtors:Bob          5.00 EUR
-          shared: "Expenses:Food:Drinks (50%, 5.00 EUR)"
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 4.00 EUR"
+        Equity:Bob                  4.00 EUR
+          allocated: "Expenses:Food:Drinks 4.00 EUR"
+        Equity:Earnings:Current    -4.00 EUR
 
-  Scenario: Fully share sole Expense posting using absolute amount
+  Scenario: Partially allocate sole Expense posting with short account name
     When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash           -10.00 EUR
+        Expenses:Food:Drinks
+          allocate: "Bob-4"
+
+    Then should not error
+    Then the original transaction should be modified:
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash               -10.00 EUR
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 4.00 EUR"
+        Equity:Bob                  4.00 EUR
+          allocated: "Expenses:Food:Drinks 4.00 EUR"
+        Equity:Earnings:Current    -4.00 EUR
+
+  Scenario: Partially allocate sole Expense posting using relative amount
+    When this transaction is processed:
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash           -10.00 EUR
+        Expenses:Food:Drinks
+          allocate: "Bob-40%"
+
+    Then should not error
+    Then the original transaction should be modified:
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash               -10.00 EUR
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 40% (4.00 EUR)"
+        Equity:Bob                  4.00 EUR
+          allocated: "Expenses:Food:Drinks 40% (4.00 EUR)"
+        Equity:Earnings:Current    -4.00 EUR
+
+  Scenario: Fully allocate sole Expense posting using absolute amount
+    When this transaction is processed:
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -10.00 EUR
         Expenses:Food:Drinks
-          share: "Bob-10"
+          allocate: "Bob-10"
 
     Then should not error
     Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -10.00 EUR
-        Expenses:Food:Drinks        0.00 EUR
-          shared: "Assets:Debtors:Bob 10.00 EUR"
-        Assets:Debtors:Bob         10.00 EUR
-          shared: "Expenses:Food:Drinks 10.00 EUR"
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 10.00 EUR"
+        Equity:Bob                 10.00 EUR
+          allocated: "Expenses:Food:Drinks 10.00 EUR"
+        Equity:Earnings:Current   -10.00 EUR
 
-  Scenario: Fully share sole Expense posting using relative amount
+  Scenario: Fully allocate sole Expense posting using relative amount
     When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -10.00 EUR
         Expenses:Food:Drinks
-          share: "Bob-100%"
+          allocate: "Bob-100%"
 
     Then should not error
     Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -10.00 EUR
-        Expenses:Food:Drinks        0.00 EUR
-          shared: "Assets:Debtors:Bob 100% (10.00 EUR)"
-        Assets:Debtors:Bob         10.00 EUR
-          shared: "Expenses:Food:Drinks 100% (10.00 EUR)"
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 100% (10.00 EUR)"
+        Equity:Bob                 10.00 EUR
+          allocated: "Expenses:Food:Drinks 100% (10.00 EUR)"
+        Equity:Earnings:Current   -10.00 EUR
 
-  Scenario: Share sole Income posting
+  Scenario: Fully allocate sole Expense posting using ommitted amount
+    When this transaction is processed:
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash           -10.00 EUR
+        Expenses:Food:Drinks
+          allocate: "Bob"
+
+    Then should not error
+    Then the original transaction should be modified:
+      2020-01-01 * "BarAlice" "Lunch"
+        Assets:Cash               -10.00 EUR
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob (100%, 10.00 EUR)"
+        Equity:Bob                 10.00 EUR
+          allocated: "Expenses:Food:Drinks (100%, 10.00 EUR)"
+        Equity:Earnings:Current   -10.00 EUR
+
+  Scenario: allocate sole Income posting
     When this transaction is processed:
       2020-01-01 * "BarAlice" "Found change on floor with Bob"
         Assets:Cash                10.00 EUR
         Income:RandomVeryVeryLong
-          share: "Bob-40%"
+          allocate: "Bob-40%"
 
     Then should not error
     Then the original transaction should be modified:
       2020-01-01 * "BarAlice" "Found change on floor with Bob"
         Assets:Cash                10.00 EUR
-        Income:RandomVeryVeryLong              -6.00 EUR
-          shared: "Liabilities:Creditors:Bob 40% (-4.00 EUR)"
-        Liabilities:Creditors:Bob         -4.00 EUR
-          shared: "Income:RandomVeryVeryLong 40% (-4.00 EUR)"
+        Income:RandomVeryVeryLong -10.00 EUR
+          allocated: "Equity:Bob 40% (-4.00 EUR)"
+        Equity:Bob                 -4.00 EUR
+          allocated: "Income:RandomVeryVeryLong 40% (-4.00 EUR)"
+        Equity:Earnings:Current    -4.00 EUR
 
-  Scenario: Share one of several postings
+  Scenario: allocate one of several postings
     When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -12.00 EUR
         Expenses:Food:Snacks        2.00 EUR
         Expenses:Food:Drinks
-          share: "Assets:Debtors:Bob-4"
+          allocate: "Equity:Bob-4"
 
     Then should not error
     Then the original transaction should be modified:
-      2020-01-01 * "BarAlice" "Lunch with friend Bob"
+      2020-01-01 * "BarAlice" "Lunch"
         Assets:Cash               -12.00 EUR
         Expenses:Food:Snacks        2.00 EUR
-        Expenses:Food:Drinks        6.00 EUR
-          shared: "Assets:Debtors:Bob 4.00 EUR"
-        Assets:Debtors:Bob          4.00 EUR
-          shared: "Expenses:Food:Drinks 4.00 EUR"
+        Expenses:Food:Drinks       10.00 EUR
+          allocated: "Equity:Bob 4.00 EUR"
+        Equity:Bob                  4.00 EUR
+          allocated: "Expenses:Food:Drinks 4.00 EUR"
+        Equity:Earnings:Current    -4.00 EUR
