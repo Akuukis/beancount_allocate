@@ -46,7 +46,7 @@ Config = NamedTuple(
     ],
 )
 
-PluginShareParseError = namedtuple("LoadError", "source message entry")
+PluginAllocateParseError = namedtuple("LoadError", "source message entry")
 
 
 def allocate(
@@ -54,7 +54,7 @@ def allocate(
 ) -> Tuple[Entries, List[Exception]]:
     new_accounts: Set[Account] = set()
     new_entries: Entries = []
-    errors: List[PluginShareParseError] = []
+    errors: List[PluginAllocateParseError] = []
 
     # 1. Parse config
     try:
@@ -62,7 +62,7 @@ def allocate(
     except:
 
         errors.append(
-            PluginShareParseError(
+            PluginAllocateParseError(
                 new_metadata('', 0),
                 'Plugin "allocate" received a bad configuration. Please provide an object.',
                 entries[-1],  # TODO: how to pass nothing? For now pass last to simplify testing.
@@ -104,7 +104,7 @@ def allocate(
             and metaset.get(tx.meta, config.mark_name)
         ):
             errors.append(
-                PluginShareParseError(
+                PluginAllocateParseError(
                     new_metadata(entry.meta["filename"], entry.meta["lineno"]),
                     'Plugin "allocate" doesn\'t work on transactions that has nor income and expense.',
                     entry,
@@ -128,7 +128,7 @@ def allocate(
             total_value = total_income.get_currency_units(tx.postings[0].units.currency)
         else:
             errors.append(
-                PluginShareParseError(
+                PluginAllocateParseError(
                     new_metadata(entry.meta["filename"], entry.meta["lineno"]),
                     'Plugin "allocate" doesn\'t work on transactions that has both income and expense: please split it up into two transactions instead.',
                     entry,
@@ -149,7 +149,7 @@ def allocate(
 
             if not (posting.account.split(":")[0] in ("Income", "Expenses")):
                 errors.append(
-                    PluginShareParseError(
+                    PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
                         'Mark "'+config.mark_name+'" doesn\'t make sense on a "{}" type posting.'.format(
                             posting.account.split(":")[0]
@@ -172,7 +172,7 @@ def allocate(
                 # 5.1. Apply defaults.
                 if(parts[0] == ''):
                     errors.append(
-                        PluginShareParseError(
+                        PluginAllocateParseError(
                             new_metadata(
                                 posting.meta["filename"], posting.meta["lineno"]
                             ),
@@ -198,7 +198,7 @@ def allocate(
                             )
                         except Exception:
                             errors.append(
-                                PluginShareParseError(
+                                PluginAllocateParseError(
                                     new_metadata(
                                         posting.meta["filename"], posting.meta["lineno"]
                                     ),
@@ -224,7 +224,7 @@ def allocate(
                             )
                         except Exception:
                             errors.append(
-                                PluginShareParseError(
+                                PluginAllocateParseError(
                                     new_metadata(
                                         posting.meta["filename"], posting.meta["lineno"]
                                     ),
@@ -248,7 +248,7 @@ def allocate(
 
             if total_shared_absolute > abs(total_value.number):
                 errors.append(
-                    PluginShareParseError(
+                    PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
                         "The posting can't share more than it's absolute value",
                         entry,
@@ -259,7 +259,7 @@ def allocate(
 
             if total_shared_relative > 1:
                 errors.append(
-                    PluginShareParseError(
+                    PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
                         "The posting can't share more percent than 100%.",
                         entry,
@@ -273,7 +273,7 @@ def allocate(
                 and total_shared_relative > 0
             ):
                 errors.append(
-                    PluginShareParseError(
+                    PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
                         "It doesn't make sense to split a remaining amount of zero.",
                         entry,
@@ -284,7 +284,7 @@ def allocate(
 
             if total_shared_relative == 1 and len(todo_absent) > 0:
                 errors.append(
-                    PluginShareParseError(
+                    PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
                         "It doesn't make sense to further auto-split when amount is already split for full 100%.",
                         entry,
