@@ -38,8 +38,7 @@ Config = NamedTuple(
     [
         ("mark_name", str),
         ("meta_name", Union[str, None]),
-        ("account_debtors", str),
-        ("account_creditors", str),
+        ("account_equity", str),
         ("quantize", Decimal),
         ("open_date", Union[date, None]),
     ],
@@ -73,8 +72,7 @@ def allocate(
     config = Config(
         config_obj.pop("mark_name", "allocate"),
         config_obj.pop("meta_name", "allocated"),
-        config_obj.pop("account_debtors", "Assets:Debtors"),
-        config_obj.pop("account_creditors", "Liabilities:Creditors"),
+        config_obj.pop("account_equity", "Equity"),
         D(str(config_obj.pop("quantize", 0.01))),
         None if raw_open_date is None else date.fromisoformat(raw_open_date),
     )
@@ -118,18 +116,18 @@ def allocate(
             continue
 
         if not total_expenses.is_empty() and total_income.is_empty():
-            account_prefix = config.account_debtors + ":"
+            account_prefix = config.account_equity + ":"
             total_value = total_expenses.get_currency_units(
                 tx.postings[0].units.currency
             )
         elif total_expenses.is_empty() and not total_income.is_empty():
-            account_prefix = config.account_creditors + ":"
+            account_prefix = config.account_equity + ":"
             total_value = total_income.get_currency_units(tx.postings[0].units.currency)
         else:
             errors.append(
                 PluginAllocateParseError(
                     new_metadata(entry.meta["filename"], entry.meta["lineno"]),
-                    'Plugin "allocate" doesn\'t work on transactions that has both income and expense: please split it up into two transactions instead.',
+                    'Plugin "allocate" doesn\'t work on transactions that has both income and expense: TODO.',
                     entry,
                 )
             )
@@ -274,7 +272,7 @@ def allocate(
                 errors.append(
                     PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
-                        "It doesn't make sense to split a remaining amount of zero.",
+                        "It doesn't make sense to allocate a remaining amount of zero.",
                         entry,
                     )
                 )
@@ -285,7 +283,7 @@ def allocate(
                 errors.append(
                     PluginAllocateParseError(
                         new_metadata(posting.meta["filename"], posting.meta["lineno"]),
-                        "It doesn't make sense to further auto-split when amount is already split for full 100%.",
+                        "It doesn't make sense to further auto-allocate when amount is already allocate for full 100%.",
                         entry,
                     )
                 )
@@ -293,14 +291,13 @@ def allocate(
                 continue
 
             new_postings_inner = []
+            remainder = posting.units
             # 5.2. Handle absolute amounts first: mutate original posting's amount & create new postings.
             for amount, account in todo_absolute:
-                posting = posting._replace(
-                    units=posting.units._replace(
-                        number=(posting.units.number - amount.number).quantize(
-                            config.quantize
-                        )
-                    ),
+                remainder=posting.units._replace(
+                    number=(posting.units.number - amount.number).quantize(
+                        config.quantize
+                    )
                 )
                 if config.meta_name is not None:
                     posting = posting._replace(
@@ -326,9 +323,20 @@ def allocate(
                         },
                     )
                 )
+                new_postings_inner.append(
+                    Posting(
+                        'Equity:Earnings:Current',
+                        units=-posting.units._replace(
+                            number=(amount.number).quantize(config.quantize)
+                        ),
+                        cost=posting.cost,
+                        price=None,
+                        flag=None,
+                        meta={}
+                    )
+                )
 
             # 5.3. Handle relative amounts second: create new postings.
-            remainder = posting.units
             total = D(0)
             for percent, account in todo_percent:
                 units = posting.units._replace(
@@ -356,6 +364,16 @@ def allocate(
                         },
                     )
                 )
+                new_postings_inner.append(
+                    Posting(
+                        'Equity:Earnings:Current',
+                        units=-units,
+                        cost=posting.cost,
+                        price=None,
+                        flag=None,
+                        meta={}
+                    )
+                )
                 if config.meta_name is not None:
                     posting = posting._replace(
                         meta=metaset.add(
@@ -371,54 +389,58 @@ def allocate(
                     )
 
             # 5.4. Handle absent amounts third: create new postings.
-            total_percent = sum(i for i, _ in todo_percent)
-            percent = (1 - total_percent) / (1 + len(todo_absent))
-            for account in todo_absent:
-                units = posting.units._replace(
-                    number=(D(float(remainder.number) * percent)).quantize(
-                        config.quantize
-                    )
-                )
-                total = total + units.number
-                new_postings_inner.append(
-                    Posting(
-                        account,
-                        units=units,
-                        cost=posting.cost,
-                        price=None,
-                        flag=None,
-                        meta={}
-                        if config.meta_name is None
-                        else {
-                            config.meta_name: posting.account
-                            + " ("
-                            + str(int(percent * 100))
-                            + "%, "
-                            + units.to_string()
-                            + ")"
-                        },
-                    )
-                )
-                if config.meta_name is not None:
-                    posting = posting._replace(
-                        meta=metaset.add(
-                            posting.meta,
-                            config.meta_name,
-                            account
-                            + " ("
-                            + str(int(percent * 100))
-                            + "%, "
-                            + units.to_string()
-                            + ")",
+            if len(todo_absent) > 0:
+                total_percent = sum(i for i, _ in todo_percent)
+                percent = (1 - total_percent) / (0 + len(todo_absent))
+                for account in todo_absent:
+                    units = posting.units._replace(
+                        number=(D(float(remainder.number) * percent)).quantize(
+                            config.quantize
                         )
                     )
-
-            # 5.5. Handle original posting last (mutate!).
-            posting = posting._replace(
-                units=posting.units._replace(
-                    number=(remainder.number - total).quantize(config.quantize)
-                )
-            )
+                    total = total + units.number
+                    new_postings_inner.append(
+                        Posting(
+                            account,
+                            units=units,
+                            cost=posting.cost,
+                            price=None,
+                            flag=None,
+                            meta={}
+                            if config.meta_name is None
+                            else {
+                                config.meta_name: posting.account
+                                + " ("
+                                + str(int(percent * 100))
+                                + "%, "
+                                + units.to_string()
+                                + ")"
+                            },
+                        )
+                    )
+                    new_postings_inner.append(
+                        Posting(
+                            'Equity:Earnings:Current',
+                            units=-units,
+                            cost=posting.cost,
+                            price=None,
+                            flag=None,
+                            meta={}
+                        )
+                    )
+                    if config.meta_name is not None:
+                        posting = posting._replace(
+                            meta=metaset.add(
+                                posting.meta,
+                                config.meta_name,
+                                account
+                                + " ("
+                                + str(int(percent * 100))
+                                + "%, "
+                                + units.to_string()
+                                + ")",
+                            )
+                        )
 
             # if(posting.units.number > D(0)):
             new_postings.append(posting)
@@ -430,7 +452,7 @@ def allocate(
             new_entries.append(entry)
             continue
 
-        for account in new_accounts:
+        for account in new_accounts.union(set(['Equity:Earnings:Current'])):
             new_postings = group_postings(new_postings, account, config.meta_name)
 
         new_entries.append(

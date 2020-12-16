@@ -2,6 +2,7 @@ Feature: allocate a single posting to single account
 
   Background: default
     Given the following setup:
+      2020-01-01 open Equity:Earnings:Current
       2020-01-01 open Assets:Cash
       2020-01-01 open Expenses:Food:Drinks
       2020-01-01 open Expenses:Food:Snacks
@@ -124,7 +125,7 @@ Feature: allocate a single posting to single account
           allocated: "Equity:Bob 40% (-4.00 EUR)"
         Equity:Bob                 -4.00 EUR
           allocated: "Income:RandomVeryVeryLong 40% (-4.00 EUR)"
-        Equity:Earnings:Current    -4.00 EUR
+        Equity:Earnings:Current     4.00 EUR
 
   Scenario: allocate one of several postings
     When this transaction is processed:

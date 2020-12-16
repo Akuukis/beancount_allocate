@@ -2,6 +2,7 @@ Feature: Allocate a single posting to several accounts
 
   Background: default
     Given the following setup:
+      2020-01-01 open Equity:Earnings:Current
       2020-01-01 open Assets:Cash
       2020-01-01 open Expenses:Food:Drinks
 
@@ -24,8 +25,7 @@ Feature: Allocate a single posting to several accounts
           allocated: "Expenses:Food:Drinks 4.00 EUR"
         Equity:Charlie              4.00 EUR
           allocated: "Expenses:Food:Drinks 4.00 EUR"
-        Equity:Earnings:Current    -4.00 EUR
-        Equity:Earnings:Current    -4.00 EUR
+        Equity:Earnings:Current    -8.00 EUR
 
   Scenario: Allocate a posting to several different accounts using relative amounts
     When this transaction is processed:
@@ -46,8 +46,7 @@ Feature: Allocate a single posting to several accounts
           allocated: "Expenses:Food:Drinks 40% (4.00 EUR)"
         Equity:Charlie              4.00 EUR
           allocated: "Expenses:Food:Drinks 40% (4.00 EUR)"
-        Equity:Earnings:Current    -4.00 EUR
-        Equity:Earnings:Current    -4.00 EUR
+        Equity:Earnings:Current    -8.00 EUR
 
   Scenario: Allocate a posting to several different accounts using omitted amount
     When this transaction is processed:
@@ -68,8 +67,7 @@ Feature: Allocate a single posting to several accounts
           allocated: "Expenses:Food:Drinks (50%, 5.00 EUR)"
         Equity:Charlie              5.00 EUR
           allocated: "Expenses:Food:Drinks (50%, 5.00 EUR)"
-        Equity:Earnings:Current    -5.00 EUR
-        Equity:Earnings:Current    -5.00 EUR
+        Equity:Earnings:Current   -10.00 EUR
 
   Scenario: Allocate a posting to several different accounts using mixed amounts
     When this transaction is processed:
@@ -84,19 +82,17 @@ Feature: Allocate a single posting to several accounts
     Then the original transaction should be modified:
       2020-01-01 * "BarAlice" "Beer"
         Assets:Cash             -10.00 EUR
-        Expenses:Food:Drinks     10.80 EUR
+        Expenses:Food:Drinks     10.00 EUR
           allocated: "Equity:Bob 4.00 EUR"
           allocated901: "Equity:Charlie 40% (2.40 EUR)"
-          allocated902: "Equity:David (60%, 1.80 EUR)"
+          allocated902: "Equity:David (60%, 3.60 EUR)"
         Equity:Bob                4.00 EUR
           allocated: "Expenses:Food:Drinks 4.00 EUR"
         Equity:Charlie            2.40 EUR
           allocated: "Expenses:Food:Drinks 40% (2.40 EUR)"
         Equity:David              3.60 EUR
-          allocated: "Expenses:Food:Drinks (60%, 1.80 EUR)"
-        Equity:Earnings:Current  -4.00 EUR
-        Equity:Earnings:Current  -2.40 EUR
-        Equity:Earnings:Current  -3.60 EUR
+          allocated: "Expenses:Food:Drinks (60%, 3.60 EUR)"
+        Equity:Earnings:Current -10.00 EUR
 
   Scenario: Allocate a posting to the same account several times using absolute amounts
     When this transaction is processed:
@@ -171,12 +167,12 @@ Feature: Allocate a single posting to several accounts
     Then the original transaction should be modified:
       2020-01-01 * "BarAlice" "Beer with my friend Bob (a lot)"
         Assets:Cash               -10.00 EUR
-        Expenses:Food:Drinks       10.80 EUR
+        Expenses:Food:Drinks       10.00 EUR
           allocated: "Equity:Bob 4.00 EUR"
           allocated901: "Equity:Bob 40% (2.40 EUR)"
-          allocated902: "Equity:Bob (30%, 3.60 EUR)"
-        Equity:Bob                  8.20 EUR
+          allocated902: "Equity:Bob (60%, 3.60 EUR)"
+        Equity:Bob                 10.00 EUR
           allocated: "Expenses:Food:Drinks 4.00 EUR"
           allocated901: "Expenses:Food:Drinks 40% (2.40 EUR)"
-          allocated902: "Expenses:Food:Drinks (30%, 3.60 EUR)"
+          allocated902: "Expenses:Food:Drinks (60%, 3.60 EUR)"
         Equity:Earnings:Current   -10.00 EUR

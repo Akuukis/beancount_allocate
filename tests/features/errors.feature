@@ -2,6 +2,7 @@ Feature: Report meaningful errors
 
   Background: default
     Given the following setup:
+      2020-01-01 open Equity:Earnings:Current
       2020-01-01 open Assets:Cash
       2020-01-01 open Assets:Safe
       2020-01-01 open Expenses:Food:Drinks
@@ -118,4 +119,4 @@ Feature: Report meaningful errors
 
     Then the original transaction should not be modified
     And should produce plugin error:
-        Plugin "allocate" doesn't work on transactions that has both income and expense: please allocate it up into two transactions instead.
+        Plugin "allocate" doesn't work on transactions that has both income and expense: TODO.
