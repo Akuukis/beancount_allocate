@@ -124,13 +124,16 @@ def allocate(
             account_prefix = config.account_equity + ":"
             total_value = total_income.get_currency_units(tx.postings[0].units.currency)
         else:
-            errors.append(
-                PluginAllocateParseError(
-                    new_metadata(entry.meta["filename"], entry.meta["lineno"]),
-                    'Plugin "allocate" doesn\'t work on transactions that has both income and expense: TODO.',
-                    entry,
-                )
-            )
+            ## Problem: Conflicts with depr and spread plugins where I would like to allocate txs except first one.
+            ## Workaround: Silently continue. But then I don't get an error on legit bad user input.
+            ## TODO: integration with depr and spread plugins, taking into account renames and multiple instances.
+            # errors.append(
+            #     PluginAllocateParseError(
+            #         new_metadata(entry.meta["filename"], entry.meta["lineno"]),
+            #         'Plugin "allocate" doesn\'t work on transactions that has both income and expense.',
+            #         entry,
+            #     )
+            # )
             new_entries.append(entry)
             continue
 
