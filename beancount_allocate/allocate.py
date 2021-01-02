@@ -163,7 +163,6 @@ def allocate(
             todo_absent: List[str] = list()
             for mark in marks:
                 parts = mark.split("-")
-                print(parts)
                 account: str
 
                 # 5.1. Apply defaults.
@@ -448,7 +447,6 @@ def allocate(
             new_postings.extend(new_postings_inner)
 
         if bailed:
-            print('bailed')
             new_entries.append(entry)
             continue
 
