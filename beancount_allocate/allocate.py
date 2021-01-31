@@ -24,10 +24,9 @@ from beancount_allocate.common import (
     read_config,
     normalize_marked_txn,
     marked_postings,
-    sum_income,
-    sum_expenses,
 )
-import beancount_allocate.metaset as metaset
+import beancount_plugin_utils.metaset as metaset
+from beancount_plugin_utils.common import sum_income, sum_expenses
 
 __plugins__ = ["allocate"]
 

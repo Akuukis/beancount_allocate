@@ -4,7 +4,7 @@ from copy import deepcopy
 from beancount.core.data import Transaction, Posting
 from beancount.core.inventory import Inventory
 
-import beancount_allocate.metaset as metaset
+import beancount_plugin_utils.metaset as metaset
 
 
 def read_config(config_string):
@@ -97,19 +97,3 @@ def marked_postings(
                 yield default_marks, posting, _posting, copy
         else:
             yield None, posting, _posting, copy
-
-
-def sum_income(tx: Transaction) -> Inventory:
-    total = Inventory()
-    for posting in tx.postings:
-        if posting.account.split(":")[0] == "Income":
-            total.add_position(posting)
-    return total
-
-
-def sum_expenses(tx: Transaction) -> Inventory:
-    total = Inventory()
-    for posting in tx.postings:
-        if posting.account.split(":")[0] == "Expenses":
-            total.add_position(posting)
-    return total

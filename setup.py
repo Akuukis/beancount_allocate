@@ -23,6 +23,6 @@ setup(
     package_data={'beancount_allocate': ['../README.md']},
     package_dir={'beancount_allocate': 'beancount_allocate'},
     packages=['beancount_allocate'],
-    requires=['beancount (>2.0)'],
+    install_requires=['beancount >= 2.0', 'beancount_plugin_utils >= 0.0.4'],
     url='https://github.com/Akuukis/beancount_allocate',
 )

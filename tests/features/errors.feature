@@ -98,16 +98,6 @@ Feature: Report meaningful errors
     And should produce plugin error:
         It doesn't make sense to further auto-allocate when amount is already allocate for full 100%.
 
-  Scenario: Throw Error if sharing mark has no effect
-    When this transaction is processed:
-      2020-01-01 * "BarAlice" "Lunch with my guy friends" #allocate-Bob
-        Assets:Cash           -15.00 EUR
-        Assets:Safe
-
-    Then the original transaction should not be modified
-    And should produce plugin error:
-        Plugin "allocate" doesn't work on transactions that has nor income and expense.
-
   Scenario: Throw Error if sharing both Expense and Income postings
     When this transaction is processed:
       2020-01-01 * "BarAlice" "Lunch with my guy friends"
@@ -119,4 +109,4 @@ Feature: Report meaningful errors
 
     Then the original transaction should not be modified
     And should produce plugin error:
-        Plugin "allocate" doesn't work on transactions that has both income and expense: TODO.
+        Plugin "allocate" doesn't work on transactions that has both income and expense.
