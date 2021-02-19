@@ -1,29 +1,32 @@
-Allocate
+Allocate/Assign
 ===============================================================================
 
 [![PyPI - Version](https://img.shields.io/pypi/v/beancount_allocate)](https://pypi.org/project/beancount-allocate/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/beancount_allocate)](https://pypi.org/project/beancount-allocate/)
 [![PyPI - Wheel](https://img.shields.io/pypi/wheel/beancount_allocate)](https://pypi.org/project/beancount-allocate/)
-[![License](https://img.shields.io/pypi/l/beancount_allocate)](https://choosealicense.com/licenses/agpl-3.0/)
+[![License](https://img.shields.io/pypi/l/beancount_allocate)](https://chooseBobnse.com/licenses/agpl-3.0/)
 [![Linting](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-A beancount plugin to allocate expenses among multiple equity accounts (e.g. partners, budget positions) within one ledger.
-<!-- A beancount plugin to share expenses among multiple partners within one ledger. -->
+A beancount plugin to allocate transactions among multiple equity accounts (e.g. budgeting positions) within one ledger.
 
-An equity account in Beancount can be used for many purposes. Most notably, for **multiple partners within one ledger** or **budgeting**. Allocate plugin can be useful for both multiple partners `#allocate-Bob` and budgeting `#allocate-Food`.
+An equity account in Beancount can be used for many purposes. Most notably, for **budgeting**, **managing savings** or **managing multiple partners within one ledger**.
 
-Allocate plugin uses tag syntax to add info to the transaction:
-- basic: allocate expense 100% to a partner/budget position - simply use `#allocate-Bob`/`#allocate-Food`
-- amount: allocate a specific sum of expense to a partner/budget position. `#allocate-Bob-7`/`#allocate-Food-10`
-- percentage: allocate a specific percentage of expense to a partner/budget position. `#allocate-Bob-40%`/`#allocate-Food-75%`
-- many: allocate expense to many accounts within ledger. `#allocate-Bob #allocate-Alice`/`#allocate-Food #allocate-Supplies`
+Allocate plugin uses tag syntax to add info to the transaction.
+- basic: allocate expense 100% to an budget category - simply use `#allocate-Food`
+- amount: allocate a specific sum of expense to a budget category. `#allocate-Food-10`
+- percentage: allocate a specific percentage % of expense to a budget category. `#allocate-Food-75p`
+- many: allocate expense to many budget categories within ledger. `#allocate-Food #allocate-Entertainment`
 
+Equity accounts
+===============================================================================
 
+TODO: what are equity accounts? when are they useful?
 
+Budgeting
+===============================================================================
 
-
-
+TODO: how to do budgeting in Beancount and using our plugins (aka - repeating transactions)
 
 Install
 ===============================================================================
@@ -57,98 +60,233 @@ plugin "beancount_allocate" "{}"
 
 
 
+Use case: Allocate an expense to "Food" budget category
+===============================================================================
+
+> TL;DR: use `#allocate-Food` tag.
+
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food. So, you budget the 200 EUR in the `Equity:Food` account:
+
+```beancount
+2021-01-01 * "January food budget"
+  Equity:Food                       -200.00 EUR
+  Equity:Earnings:Current            200.00 EUR
+```
+
+Two days, later, you go to shop and spend 50 EUR on groceries for the week.
+
+### How to use
+
+Tag your transaction simply with a tag + budget category/equity account name, like #allocate-Food:
+
+```beancount
+2021-01-03 * "Supermarket" "Groceries" #allocate-Food
+  Assets:Cash           -50.00 EUR
+  Expenses:Food:Groceries
+```
+
+### What happens
+
+```beancount
+2020-01-03 * "Supermarket" "Groceries"
+  Assets:Cash               -50.00 EUR
+  Expenses:Food:Groceries    50.00 EUR
+  Equity:Food                50.00 EUR
+  Equity:Earnings:Current   -50.00 EUR
+```
+
+
+Allocate a specific sum of expense to one budget category
+===============================================================================
+
+> TL;DR: use `#allocate-Food-7` tag.
+
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food. So, you budget the 200 EUR in the `Equity:Food` account:
+
+```beancount
+2021-01-01 * "January food budget"
+  Equity:Food                       -200.00 EUR
+  Equity:Earnings:Current            200.00 EUR
+```
+
+Two days, later, you spend 50 EUR in a bar of what 7 EUR were food (at least something from this you can budget...).
+
+### How to use
+
+Tag your transaction simply with a tag + budget category/equity account name + debtors' amount:
+
+```beancount
+2021-01-03 * "Bar" "Beer snacks" #allocate-Food-7
+  Assets:Cash             -50.00 EUR
+  Expenses:Alcohol         50.00 EUR
+```
+
+### What happens
+
+```beancount
+2020-01-03 * "Supermarket" "Groceries"
+  Assets:Cash               -50.00 EUR
+  Expenses:Alcohol           50.00 EUR
+  Equity:Food                7.00 EUR
+  Equity:Earnings:Current   -7.00 EUR
+```
+
+Allocate a specific percentage % of expense to one budget category
+===============================================================================
+
+> TL;DR: use `#allocate-Food-75p` tag.
+
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food. So, you budget the 200 EUR in the `Equity:Food` account:
+
+```beancount
+2021-01-01 * "January food budget"
+  Equity:Food                       -200.00 EUR
+  Equity:Earnings:Current            200.00 EUR
+```
+
+Two days, later, you spend 20 EUR in a supermarket. You are too lazy to count the specific sum, and with a quick scan of the receipt, you estimate that roughly 75% of it is groceries.
+
+### How to use
+
+Tag your transaction with a tag + budget category/equity account name + debtors' percentage:
+
+```beancount
+2021-01-03 * "Supermarket" "Mostly groceries" #allocate-Food-75p
+  Assets:Cash                    -20.00 EUR
+  Expenses:Food:Groceries         20.00 EUR
+```
+
+### What happens
+
+```beancount
+2020-01-03 * "Supermarket" "Groceries"
+  Assets:Cash               -20.00 EUR
+  Expenses:Food:Groceries    20.00 EUR
+  Equity:Food                15.00 EUR
+  Equity:Earnings:Current   -15.00 EUR
+```
+
+Allocate expense to many budgeting categores of the ledger
+===============================================================================
+
+> TL;DR: use `#allocate-Food #allocate-Entertainment` tags.
+
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food and 100 EUR on entertainment. So, you budget the 200 EUR in the `Equity:Food` account and 100 EUR in the `Equity:Entertainment` account:
+
+```beancount
+2021-01-01 * "January budget categories"
+  Equity:Food                       -200.00 EUR
+  Equity:Entertainment              -100.00 EUR
+  Equity:Earnings:Current            300.00 EUR
+```
+
+Two days, later, you go to a fancy dinner and spend 40 EUR in a restaurant. This is not typical of you, so this is a pretty random expense. Because it was both food and entertainment, you allocate this expense to both categories evenly.
+
+### How to use
+
+Tag your transaction with a tag for each budget category you want to allocate the transaction to with: tag + budget category/equity account name:
+
+```beancount
+2021-01-03 * "Restaurant" "Fancy dinner" #allocate-Food #allocate-Entertainment
+  Assets:Cash                    -40.00 EUR
+  Expenses:Random                 40.00 EUR
+```
+
+### What happens
+
+```beancount
+2020-01-03 * "Restaurant" "Fancy dinner"
+  Assets:Cash               -40.00 EUR
+  Expenses:Random            40.00 EUR
+  Equity:Food                20.00 EUR
+  Equity:Entertainment       20.00 EUR
+  Equity:Earnings:Current   -40.00 EUR
+```
+
 Use case: Multiple partners in one ledger
 ===============================================================================
 
+Allocate plugin can be convenient if you share most of your income and expenses with a partner/friend and you both use one ledger. Allocation in this sense means making the transaction personal, not shared (default).
+
 Allocate an expense to one partner
 -------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Bob` tag.
+> TL;DR: use `#allocate-Sam` tag.
+
+For example, you, Bob, are roommates with your friend Sam. You bought socks for Sam because Sam asked. At the end - you spent your money on his private socks.
 
 ### How to use
 
-### What happens
-
-Allocate a specific sum of expense to one partner
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Bob-10` tag.
-
-### How to use
+```beancount
+      2021-01-01 * "SocksShop" "Socks" #allocate-Sam
+        Assets:Cash           -5.00 EUR
+        Expenses:Clothes
+```
 
 ### What happens
 
-Allocate a specific percentage of expense to one partner
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Bob-40%` tag.
+The transaction will get transformed into 2 transactions each with 100% of the sum. The name in the tag will become your debtor (or creditor, if splitting income).
 
-### How to use
+```beancount
+      2021-01-01 * "SocksShop" "Socks"
+        Assets:Cash               -5.00 EUR
+        Expenses:Clothes       5.00 EUR
+          allocated: "Equity:Sam (100%, 5.00 EUR)"
+        Equity:Sam                 5.00 EUR
+          allocated: "Expenses:Clothes (100%, 5.00 EUR)"
+        Equity:Earnings:Current   -5.00 EUR
+```
 
-### What happens
-
-
-Allocate expense to many partners within ledger
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Bob #allocate-Alice` tags.
-
-### How to use
-
-### What happens
-
-
-
-
-
-
-
-
-Use case: Budgeting
-===============================================================================
-
-Allocate an expense 100% to one budget position
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Food` tag.
-
-### How to use
-
-### What happens
-
-Allocate a specific sum of expense to one budget position
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Food-7` tag.
-
-### How to use
-
-### What happens
-
-Allocate a specific percentage of expense to one budget position
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Food-75%` tag.
-
-### How to use
-
-### What happens
-
-Allocate expense to many budgeting positions of the ledger
--------------------------------------------------------------------------------
-> TL;DR: use `#allocate-Food #allocate-Supplies` tags.
-
-### How to use
-
-### What happens
-
-
-
-
-
-
-
+For more specific use cases check out budgeting examples above - the basic functionalty stays the same.
 
 Use case: something complex
 ===============================================================================
-> TL;DR: nope, read on.
+> TL;DR: look at metadata or write out full transaction
+
+Use debug that shows all the metadata - what goes where.
+
+To turn on metadata, edit settings:
+
+```beancount
+TODO Kalvis input
+```
+
+Transactions with metadata will have a lot more information.
 
 
 
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food. So, you budget the 200 EUR in the `Equity:Food` account:
 
+```beancount
+2021-01-01 * "January food budget"
+  Equity:Food                       -200.00 EUR
+  Equity:Earnings:Current            200.00 EUR
+```
+
+Two days, later, you go to shop and spend 50 EUR on groceries for the week.
+
+### How to use
+
+```beancount
+2021-01-03 * "Supermarket" "Groceries" #allocate-Food
+  Assets:Cash                     -50.00 EUR
+  Expenses:Food:Groceries          50.00 EUR
+```
+
+### What happens
+
+```beancount
+2020-01-03 * "Supermarket" "Groceries"
+  Assets:Cash               -50.00 EUR
+  Expenses:Food:Groceries    50.00 EUR
+    allocated: "Equity:Food (100%, 7.00 EUR)"
+  Equity:Food                7.00 EUR
+    allocated: "Expenses:Food:Groceries (100%, 7.00 EUR)"
+  Equity:Earnings:Current   -7.00 EUR
+```
+
+
+
+In reality, tags are only the shortcuts of share plugin to make your life easier. You can always write out the full transaction and sometimes it does make more sense.
 
 
 
@@ -162,7 +300,7 @@ Use case: Savings
 
 
 
-When to use Share and when Allocate?
+When to use Share and when Allocate plugins?
 ===============================================================================
 > TL;DR: internal parties - Allocate, external - Share.
 
