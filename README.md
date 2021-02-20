@@ -21,12 +21,35 @@ Allocate plugin uses tag syntax to add info to the transaction.
 Equity accounts
 ===============================================================================
 
-Kalvis TODO: what are equity accounts? when are they useful?
+TODO Kalvis: what are equity accounts? when are they useful?
 
 Budgeting
 ===============================================================================
 
-Kalvis TODO: how to do budgeting in Beancount and using our plugins (aka - repeating transactions)
+Budgeting means assigning every money unit a job (budget category) before it is spent. In Beancount that happens by assigning money from your income account `Equity:Earnings:Current` to the budget categories where you plan to spend money.
+
+
+Let's say you have a 1000 EUR income and at the beginning of the month you make your budget:
+
+```beancount
+2021-01-01 * "January budget"
+  Equity:Food                       -250.00 EUR
+  Equity:Supplies                    -50.00 EUR
+  Equity:Utilities                   -50.00 EUR
+  Equity:Housing                    -350.00 EUR
+  Equity:Entertainment              -100.00 EUR
+  Equity:Savings                    -200.00 EUR
+  Equity:Earnings:Current           1000.00 EUR
+```
+
+From now on, the money is assigned from income account to each budget category. And when you register expenses, they should use the money from each budget category (because income account is already empty anyways). And this is where `#allocate-` tag comes handy: it automatically assigns the expense to the budget category specified in the tag (usecases below).
+
+Repeat plugin
+--------------------------------------------------------------------------------
+
+If your budget or at least some budget categories do not change month by month, you can make use of another plugin from the utils package: [repeat](https://github.com/Akuukis/beancount_plugin_utils)
+
+TODO Kalvis: how to do budgeting in Beancount and using our plugins (aka - repeating transactions)
 
 Install
 ===============================================================================
@@ -100,7 +123,7 @@ The transaction will get 2 new postings to represent the change in budget: Food 
 ```
 
 
-Allocate a specific sum of expense to one budget category
+Use case: Allocate a specific sum of expense to one budget category
 ===============================================================================
 
 > TL;DR: use `#allocate-Food-7` tag.
@@ -139,7 +162,7 @@ The transaction will get 2 new postings to represent the change in budget: Food 
   Equity:Earnings:Current   -7.00 EUR
 ```
 
-Allocate a specific percentage % of expense to one budget category
+Use case: Allocate a specific percentage % of expense to one budget category
 ===============================================================================
 
 > TL;DR: use `#allocate-Food-75p` tag.
@@ -178,7 +201,7 @@ The transaction will get 2 new postings to represent the change in budget: Food 
   Equity:Earnings:Current   -15.00 EUR
 ```
 
-Allocate expense to many budgeting categores of the ledger
+Use case: Allocate expense to many budgeting categores of the ledger
 ===============================================================================
 
 > TL;DR: use `#allocate-Food #allocate-Entertainment` tags.
@@ -280,7 +303,7 @@ For more specific use cases check out budgeting examples above - the basic funct
 
 
 
-Use case: something complex
+Use case: Something complex
 ===============================================================================
 > TL;DR: turn on metadata
 
