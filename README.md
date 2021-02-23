@@ -1,4 +1,4 @@
-Allocate/Assign
+Allocate
 ===============================================================================
 
 [![PyPI - Version](https://img.shields.io/pypi/v/beancount_allocate)](https://pypi.org/project/beancount-allocate/)
@@ -8,31 +8,61 @@ Allocate/Assign
 [![Linting](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-A beancount plugin to allocate transactions among multiple equity accounts (e.g. budgeting positions) within one ledger.
+A beancount plugin to easily allocate funds among multiple equity accounts within one ledger.
 
-An equity account in Beancount can be used for many purposes. Most notably, for **budgeting**, **managing savings** or **managing multiple partners within one ledger**.
+An equity account can be used for **budgets**, **savings** or **managing multiple partners within one ledger**.
 
-Allocate plugin uses tag syntax to add info to the transaction.
-- basic: allocate expense 100% to an budget category - simply use `#allocate-Food`
-- amount: allocate a specific sum of expense to a budget category. `#allocate-Food-10`
-- percentage: allocate a specific percentage % of expense to a budget category. `#allocate-Food-75p`
-- many: allocate expense to many budget categories within a ledger. `#allocate-Food #allocate-Entertainment`
+Allocate plugin is best used via tags on transactions:
+- `#allocate-Food`: allocate all income or expense to an equity account.
+- `#allocate-Food-10`: allocate a specific amount of income or expense to an equity account.
+- `#allocate-Food-75p`: allocate a percentage of income or expense to an equity account.
+- `#allocate-Food #allocate-Entertainment`: by adding 2+ tags, allocate to 2+ equity accounts at the same time.
+
+
+
 
 Equity accounts
 ===============================================================================
 
-TODO Kalvis: what are equity accounts? when are they useful?
+Equity means how much of Assets are owned, instead of being on credit as represented at Liabilities accounts.
+Equity formula is simply all Assets minus all Liabilities, which as well equals all Income minus all Expenses.
+There's a special account called `Equity:Earnings:Current`, where Beancount puts the result of formula above.
+
+Let's talk a bit about ownership versus control. For example, you have 400 EUR in bank account, and you borrow 100 EUR cash and put it in a wallet.
+Now you **control** 500 EUR (Assets), but still **own** 400 EUR (Equity), because you **owe** 100 EUR (Liabilities). Furthermore, it doesn't really matter which specific euro banknote is owned or owed - you can pay back with either bank transfer or cash and it would still count.
+
+In simple cases, there's just that one special equity account and that's it - it's value is the total wealth owned.
+Equity can be organized into more than one equity account.
+That is done by moving a value between two equity accounts, one usually being the special equity account.
+
+Whenever there is a income or expense (which usually is the case), it affects equity (via the formula above).
+At some intuitive level we mentally allocate specific expenses and income with specific equity accounts, e.q.:
+- a grocery or rent expense transaction with food or housing budget equity account
+- part of a income transaction with savings equity account
+- a transaction related to spouse with spouse equity account
+- etc.
+
+Such allocations are useful.
+We may think that grocery expense directly drains the allocated food budget, and that's correct by principle.
+But technically, the problem is that Beancount will **always** put it in the special `Equity:Earnings:Current` first.
+It's easy to solve, just take out the value from the special equity account and reallocate it to the correct one.
+Hence this plugin to add those two postings, so you can forget about technicalities and focus on equity allocation.
+
+
+
 
 Budgeting
 ===============================================================================
 
-Budgeting means assigning every money unit a job (budget category) before it is spent. In Beancount that happens by assigning money from your income account `Equity:Earnings:Current` to the budget categories where you plan to spend money.
+Budgeting means assigning every money unit a job (budget category) before it is spent. In Beancount that happens by assigning value from the special equity account `Equity:Earnings:Current` to the budget category accounts where you plan to have expenses.
 
 
-Let's say you have a 1000 EUR income and at the beginning of the month you make your budget:
+Let's say at the beginning of the month you have a 1000 EUR income and you make your budget:
 
 ```beancount
 2021-01-01 * "January budget"
+  Income:MyGreatJob                -1000.00 EUR
+  Assets:Bank:Checking              1000.00 EUR
   Equity:Food                       -250.00 EUR
   Equity:Supplies                    -50.00 EUR
   Equity:Utilities                   -50.00 EUR
@@ -42,7 +72,8 @@ Let's say you have a 1000 EUR income and at the beginning of the month you make 
   Equity:Earnings:Current           1000.00 EUR
 ```
 
-From now on, the money is assigned from income account to each budget category. And when you register expenses, they should use the money from each budget category (because income account is already empty anyways). And this is where `#allocate-` tag comes handy: it automatically assigns the expense to the budget category specified in the tag (usecases below).
+From now on, the money is assigned from the special equity account to each budget category. And when you register expenses, they should use the money from each budget category (because income account is already empty anyways). And this is where `#allocate-` tag comes handy: it automatically assigns the expense to the budget category specified in the tag (usecases below).
+
 
 Repeat plugin
 --------------------------------------------------------------------------------
@@ -50,6 +81,9 @@ Repeat plugin
 If your budget or at least some budget categories do not change month by month, you can make use of another plugin from the utils package: [repeat](https://github.com/Akuukis/beancount_plugin_utils)
 
 TODO Kalvis: how to do budgeting in Beancount and using our plugins (aka - repeating transactions)
+
+
+
 
 Install
 ===============================================================================
@@ -98,16 +132,18 @@ At the start of the month, you make your budget and decide that this month you w
 
 Two days, later, you go to shop and spend 50 EUR on groceries for the week.
 
+
 How to use
 -------------------------------------------------------------------------------
 
-Tag your transaction simply with a tag + budget category/equity account name, like #allocate-Food:
+Tag your transaction simply with a tag + equity account of the budget category, like #allocate-Food:
 
 ```beancount
 2021-01-03 * "Supermarket" "Groceries" #allocate-Food
   Assets:Cash           -50.00 EUR
   Expenses:Food:Groceries
 ```
+
 
 What happens
 -------------------------------------------------------------------------------
@@ -123,12 +159,15 @@ The transaction will get 2 new postings to represent the change in budget: Food 
 ```
 
 
+
+
 Use case: Allocate a specific sum of expense to one budget category
 ===============================================================================
 
 > TL;DR: use `#allocate-Food-7` tag.
 
-At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food. So, you budget the 200 EUR in the `Equity:Food` account:
+At the start of the month, you make your budget and decide that this month you will spend 200 EUR on food.
+So, you budget the 200 EUR in the `Equity:Food` account:
 
 ```beancount
 2021-01-01 * "January food budget"
@@ -137,6 +176,7 @@ At the start of the month, you make your budget and decide that this month you w
 ```
 
 Two days, later, you spend 50 EUR in a bar of what 7 EUR were food (*at least something from this you can budget...*).
+
 
 How to use
 -------------------------------------------------------------------------------
@@ -148,6 +188,7 @@ Tag your transaction simply with a tag + budget category + amount:
   Assets:Cash             -50.00 EUR
   Expenses:Alcohol         50.00 EUR
 ```
+
 
 What happens
 -------------------------------------------------------------------------------
@@ -161,6 +202,9 @@ The transaction will get 2 new postings to represent the change in budget: Food 
   Equity:Food                7.00 EUR
   Equity:Earnings:Current   -7.00 EUR
 ```
+
+
+
 
 Use case: Allocate a specific percentage % of expense to one budget category
 ===============================================================================
@@ -176,6 +220,7 @@ At the start of the month, you make your budget and decide that this month you w
 ```
 
 Two days, later, you spend 20 EUR in a supermarket. You are too lazy to count the specific sum, and with a quick scan of the receipt, you estimate that roughly 75% of it is groceries.
+
 
 How to use
 -------------------------------------------------------------------------------
@@ -246,7 +291,7 @@ The transaction will get 3 new postings to represent the change in budget: Food 
 
 
 
-<!-- 
+<!--
 Use case: Savings
 ===============================================================================
 > same as budgeting, just different positions -->
